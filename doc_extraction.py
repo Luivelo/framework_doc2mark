@@ -84,16 +84,7 @@ Content to format:
             }
             
             response = requests.post(self.url, files=files, headers=headers)
-            if response.status_code != 200:
-                print(f"Error: API request failed with status code {response.status_code}")
-                return None
-                
-            try:
-                return response.json()
-            except ValueError as e:
-                print(f"Error: Invalid JSON response from API: {str(e)}")
-                print(f"Response content: {response.text}")
-                return None
+            return response.json()
             
         except Exception as e:
             print(f"Error processing PDF: {str(e)}")
