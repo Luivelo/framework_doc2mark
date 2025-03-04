@@ -107,15 +107,26 @@ st.markdown('''
 temp_dir = tempfile.TemporaryDirectory()
 
 # Function to display PDF
+@st.cache_data
 def display_pdf(file_path):
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    pdf_display = f'''
-        <div style="width:100%; height:500px; overflow:hidden; border-radius:5px;">
-            <iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="100%" type="application/pdf"></iframe>
-        </div>
-    '''
-    return pdf_display
+    try:
+        with open(file_path, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+        pdf_display = f'''
+            <div style="width:100%; height:500px; overflow:hidden; border-radius:5px;">
+                <embed
+                    src="data:application/pdf;base64,{base64_pdf}"
+                    type="application/pdf"
+                    width="100%"
+                    height="100%"
+                    style="border:none;"
+                />
+            </div>
+        '''
+        return pdf_display
+    except Exception as e:
+        st.error(f"Error al cargar el PDF: {str(e)}")
+        return None
 
 # Main layout with columns
 col1, col2 = st.columns(2)
@@ -143,9 +154,8 @@ with col1:
                 
                 if result:
                     try:
-                        # Process the JSON response directly without saving to file
-                        processor = PDFProcessor()
-                        markdown_content = processor.convert_to_markdown(result)
+                        # Process JSON to markdown using md_generator
+                        markdown_content = process_json_to_markdown(result)
                         
                         if markdown_content:
                             # Store the markdown content in session state for display

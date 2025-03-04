@@ -74,12 +74,12 @@ def save_markdown(content, output_path):
         f.write(content)
     print(f"Markdown file saved successfully at: {output_path}")
 
-def process_json_to_markdown(json_response, output_path):
+def process_json_to_markdown(json_response, output_path=None):
     """Convert JSON response to markdown format using Groq LLM
     
     Args:
         json_response (dict): JSON response from Landing AI API
-        output_path (str): Path to save the markdown file
+        output_path (str, optional): Path to save the markdown file. If None, only returns the content
         
     Returns:
         str: Generated markdown content or None if error occurs
@@ -91,7 +91,10 @@ def process_json_to_markdown(json_response, output_path):
         # Extract content from AIMessage object
         message_content = raw_response.content if hasattr(raw_response, 'content') else str(raw_response)
         markdown_content = extract_markdown_content(message_content)
-        save_markdown(markdown_content, output_path)
+        
+        if output_path:
+            save_markdown(markdown_content, output_path)
+            
         return markdown_content
     except Exception as e:
         print(f"Error generating markdown: {str(e)}")
