@@ -1,0 +1,38 @@
+[project]
+name = "doc_answer"
+version = "0.1.0"
+description = "Python project with pipenv support"
+authors = [
+    { name = "Luis Edward Velo Poma", email = "your.email@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-groq",
+    "langchainhub",
+    "langchain-core",
+    "langchain",
+    "python-dotenv",
+    "langchain-community",
+    "streamlit",
+    "groq",
+    "pydantic",
+    "requests",
+    "crawl4ai"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["backend*", "scrapping*"]
+namespaces = false
+
+[project.optional-dependencies]
+dev = []
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 88

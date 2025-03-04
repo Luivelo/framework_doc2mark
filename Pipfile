@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+langchain-groq = "*"
+langchainhub = "*"
+langchain-core = "*"
+langchain = "*"
+python-dotenv = "*"
+langchain-community = "*"
+streamlit = "*"
+groq = "*"
+pydantic = "*"
+requests = "*"
+crawl4ai = "*"
+pypdf = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.13"
