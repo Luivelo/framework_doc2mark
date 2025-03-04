@@ -38,9 +38,9 @@ Guidelines:
   * Headers (using #, ##, ###)
   * Lists (using - or * for bullets)
   * Code blocks (using ```)
-  * Mathematical equations (using $ or $$)
+  * Mathematical equations in md format
 - Keep all references and citations in their original format
-- Keep tables info, their contents, and abbreviations in English
+- Generate tables info, their contents, and abbreviations in English
 - Ensure the output is wrapped in ```markdown and ``` tags
 
 Content to format:
