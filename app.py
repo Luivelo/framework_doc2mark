@@ -107,19 +107,27 @@ st.markdown('''
 temp_dir = tempfile.TemporaryDirectory()
 
 # Function to display PDF
-@st.cache_data
+@st.cache_data(ttl=300)
 def display_pdf(file_path):
     try:
+        # Read file in chunks for better memory management
         with open(file_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+            chunk_size = 1024 * 1024  # 1MB chunks
+            content = b""
+            while chunk := f.read(chunk_size):
+                content += chunk
+            base64_pdf = base64.b64encode(content).decode('utf-8')
+
+        # Optimized PDF display with preload attribute and explicit dimensions
         pdf_display = f'''
-            <div style="width:100%; height:500px; overflow:hidden; border-radius:5px;">
+            <div style="width:100%; height:500px; overflow:hidden; border-radius:5px; background-color:#f0f2f6;">
                 <embed
                     src="data:application/pdf;base64,{base64_pdf}"
                     type="application/pdf"
                     width="100%"
                     height="100%"
                     style="border:none;"
+                    preload="auto"
                 />
             </div>
         '''

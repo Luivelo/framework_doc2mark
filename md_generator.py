@@ -40,6 +40,7 @@ Guidelines:
   * Code blocks (using ```)
   * Mathematical equations (using $ or $$)
 - Keep all references and citations in their original format
+- Keep tables info, their contents, and abbreviations in English
 - Ensure the output is wrapped in ```markdown and ``` tags
 
 Content to format:
