@@ -16,6 +16,7 @@ pydantic = "*"
 requests = "*"
 crawl4ai = "*"
 pypdf = "*"
+gradio_client = "*"
 
 [dev-packages]
 

@@ -4,6 +4,7 @@ import tempfile
 import base64
 from doc_extraction import PDFProcessor
 from md_generator import process_json_to_markdown
+from text2speech import text_to_speech
 import streamlit.components.v1 as components
 
 # Set page configuration
@@ -168,6 +169,24 @@ with col1:
                         if markdown_content:
                             # Store the markdown content in session state for display
                             st.session_state.markdown_content = markdown_content
+                            
+                            # Save markdown content to a temporary text file for TTS
+                            temp_text_path = os.path.join(temp_dir.name, "temp_markdown.txt")
+                            with open(temp_text_path, "w", encoding="utf-8") as f:
+                                f.write(markdown_content)
+                            
+                            # Generate audio from the markdown content
+                            audio_result = text_to_speech(
+                                input_file_path=temp_text_path,
+                                output_file_path=os.path.join(temp_dir.name, "output_audio.wav"),
+                                voice_name="af_nova"
+                            )
+                            
+                            if audio_result:
+                                audio_path = audio_result[0]
+                                # Add audio player to the interface
+                                st.audio(audio_path)
+                            
                             st.success("¡Conversión completada!")
                         else:
                             st.error("Error al generar el markdown.")
