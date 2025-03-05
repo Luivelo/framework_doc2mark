@@ -163,17 +163,21 @@ with col1:
                 
                 if result:
                     try:
+                        # Generate descriptive text for audio
+                        text_generator = TextGenerator()
+                        audio_text = text_generator.generate_text(result)
+                        
                         # Process JSON to markdown using md_generator
                         markdown_content = process_json_to_markdown(result)
                         
-                        if markdown_content:
+                        if markdown_content and audio_text:
                             # Store the markdown content in session state for display
                             st.session_state.markdown_content = markdown_content
                             
-                            # Save markdown content to a temporary text file for TTS
+                            # Save audio text to a temporary text file for TTS
                             temp_text_path = os.path.join(temp_dir.name, "temp_markdown.txt")
                             with open(temp_text_path, "w", encoding="utf-8") as f:
-                                f.write(markdown_content)
+                                f.write(audio_text)
                             
                             # Generate audio from the markdown content
                             audio_result = text_to_speech(

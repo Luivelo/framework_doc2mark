@@ -5,6 +5,69 @@ from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from doc_extraction import PDFProcessor
 
+class TextGenerator:
+    def __init__(self):
+        self.llm = init_llm()
+
+    def create_text_prompt(self, json_response):
+        """Create a prompt for generating descriptive paragraphs
+        
+        Args:
+            json_response (dict): JSON response from Landing AI API
+            
+        Returns:
+            str: Formatted prompt for the LLM
+        """
+        prompt_template = PromptTemplate(
+            input_variables=["content"],
+            template="""Generate a clear, descriptive summary of the following content in English. Focus on creating well-structured paragraphs that flow naturally when read aloud:
+
+Guidelines:
+- Present technical terms and equations in a clear, spoken-word format
+- Create coherent paragraphs suitable for text-to-speech
+- Ensure natural transitions between topics
+- Keep the tone professional but accessible
+- Format mathematical equations in a way that's easy to understand when read aloud
+- Wrap the output in ```text and ``` tags
+
+Content to summarize:
+{content}"""
+        )
+        return prompt_template.format(content=json_response)
+
+    def extract_text_content(self, llm_response):
+        """Extract clean text content from between code blocks
+        
+        Args:
+            llm_response (str): Raw response from LLM
+            
+        Returns:
+            str: Extracted text content
+        """
+        pattern = r'```text\n(.+?)\n```'
+        match = re.search(pattern, llm_response, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return llm_response
+
+    def generate_text(self, json_response):
+        """Generate descriptive text from JSON response
+        
+        Args:
+            json_response (dict): JSON response from Landing AI API
+            
+        Returns:
+            str: Generated text content or None if error occurs
+        """
+        try:
+            prompt = self.create_text_prompt(json_response)
+            raw_response = self.llm.invoke(prompt)
+            message_content = raw_response.content if hasattr(raw_response, 'content') else str(raw_response)
+            return self.extract_text_content(message_content)
+        except Exception as e:
+            print(f"Error generating text: {str(e)}")
+            return None
+
 def init_llm():
     """Initialize the Groq LLM with environment variables
     
