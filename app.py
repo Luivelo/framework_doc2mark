@@ -183,7 +183,7 @@ with col1:
                             audio_result = text_to_speech(
                                 input_file_path=temp_text_path,
                                 output_file_path=os.path.join(temp_dir.name, "output_audio.wav"),
-                                voice_name="af_nova"
+                                voice_name="af_jessica"
                             )
                             
                             if audio_result:
