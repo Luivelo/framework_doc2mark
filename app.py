@@ -94,6 +94,23 @@ st.markdown("""
     .stCodeBlock {
         margin-bottom: 0 !important;
     }
+    .audio-player-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .audio-player-container audio {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    .audio-status {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -188,8 +205,14 @@ with col1:
                             
                             if audio_result:
                                 audio_path = audio_result[0]
-                                # Add audio player to the interface
+                                # Enhanced audio player with custom styling
+                                st.markdown("""
+                                    <div class='audio-player-container'>
+                                        <h4>Audio Preview</h4>
+                                        <div class='audio-status'>Generated audio from the text content</div>
+                                """, unsafe_allow_html=True)
                                 st.audio(audio_path)
+                                st.markdown("</div>", unsafe_allow_html=True)
                             
                             st.success("¡Conversión completada!")
                         else:
