@@ -3,7 +3,7 @@ import os
 import tempfile
 import base64
 from doc_extraction import PDFProcessor
-from md_generator import process_json_to_markdown
+from md_generator import process_json_to_markdown, TextGenerator
 from text2speech import text_to_speech
 import streamlit.components.v1 as components
 
@@ -98,138 +98,137 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title and description
-st.markdown('<h1 class="main-header">PDF a Markdown Converter</h1>', unsafe_allow_html=True)
-st.markdown('''
-    Esta aplicación convierte documentos PDF en formato Markdown estructurado.
-    Sube un PDF de 1-2 páginas y obtén el código Markdown generado junto con una vista previa renderizada.
-''')
+st.markdown('<h1 class="main-header">PDF to Markdown Converter</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Convert your PDF documents to Markdown format with audio support</p>', unsafe_allow_html=True)
 
-# Create a temporary directory to store uploaded files
-temp_dir = tempfile.TemporaryDirectory()
+# File uploader
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Function to display PDF
-@st.cache_data(ttl=300)
-def display_pdf(file_path):
-    try:
-        # Read file in chunks for better memory management
-        with open(file_path, "rb") as f:
-            chunk_size = 1024 * 1024  # 1MB chunks
-            content = b""
-            while chunk := f.read(chunk_size):
-                content += chunk
-            base64_pdf = base64.b64encode(content).decode('utf-8')
+if uploaded_file is not None:
+    # Create a temporary file to store the uploaded PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        tmp_file.write(uploaded_file.getvalue())
+        tmp_file_path = tmp_file.name
 
-        # Optimized PDF display with preload attribute and explicit dimensions
-        pdf_display = f'''
-            <div style="width:100%; height:500px; overflow:hidden; border-radius:5px; background-color:#f0f2f6;">
-                <embed
-                    src="data:application/pdf;base64,{base64_pdf}"
-                    type="application/pdf"
-                    width="100%"
-                    height="100%"
-                    style="border:none;"
-                    preload="auto"
-                />
-            </div>
-        '''
-        return pdf_display
-    except Exception as e:
-        st.error(f"Error al cargar el PDF: {str(e)}")
-        return None
+    # Process the PDF
+    processor = PDFProcessor()
+    result = processor.process_pdf(tmp_file_path)
 
-# Main layout with columns
-col1, col2 = st.columns(2)
+    if result:
+        # Generate markdown content
+        markdown_content = process_json_to_markdown(result)
 
-with col1:
-    st.markdown('<h2 class="sub-header">Subir PDF</h2>', unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Selecciona un archivo PDF (1-2 páginas)", type="pdf")
-    
-    if uploaded_file is not None:
-        # Save the uploaded file to a temporary location
-        temp_pdf_path = os.path.join(temp_dir.name, uploaded_file.name)
-        with open(temp_pdf_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Display the uploaded PDF
-        st.markdown("### PDF Subido")
-        st.markdown(display_pdf(temp_pdf_path), unsafe_allow_html=True)
-        
-        # Process button
-        if st.button("Convertir a Markdown"):
-            with st.spinner("Procesando PDF..."):
-                # Process the PDF using the existing framework
-                processor = PDFProcessor()
-                result = processor.process_pdf(temp_pdf_path)
-                
-                if result:
-                    try:
-                        # Generate descriptive text for audio
-                        text_generator = TextGenerator()
-                        audio_text = text_generator.generate_text(result)
-                        
-                        # Process JSON to markdown using md_generator
-                        markdown_content = process_json_to_markdown(result)
-                        
-                        if markdown_content and audio_text:
-                            # Store the markdown content in session state for display
-                            st.session_state.markdown_content = markdown_content
-                            
-                            # Save audio text to a temporary text file for TTS
-                            temp_text_path = os.path.join(temp_dir.name, "temp_markdown.txt")
-                            with open(temp_text_path, "w", encoding="utf-8") as f:
-                                f.write(audio_text)
-                            
-                            # Generate audio from the markdown content
-                            audio_result = text_to_speech(
-                                input_file_path=temp_text_path,
-                                output_file_path=os.path.join(temp_dir.name, "output_audio.wav"),
-                                voice_name="af_nova"
-                            )
-                            
-                            if audio_result:
-                                audio_path = audio_result[0]
-                                # Add audio player to the interface
-                                st.audio(audio_path)
-                            
-                            st.success("¡Conversión completada!")
-                        else:
-                            st.error("Error al generar el markdown.")
-                    except Exception as e:
-                        st.error(f"Error durante la conversión: {str(e)}")
-                else:
-                    st.error("Error al procesar el PDF.")
+        # Generate text content for speech
+        text_generator = TextGenerator()
+        text_content = text_generator.generate_text(result)
 
-with col2:
-    st.markdown('<h2 class="sub-header">Resultado Markdown</h2>', unsafe_allow_html=True)
-    
-    # Create tabs for raw markdown and rendered preview
-    tab1, tab2 = st.tabs(["Código Markdown", "Vista Previa"])
-    
-    with tab1:
-        if 'markdown_content' in st.session_state:
-            # Display the markdown code with syntax highlighting only
-            st.code(st.session_state.markdown_content, language="markdown")
+        if text_content:
+            # Generate audio
+            audio_path = text_to_speech(text_content)
             
-            # Add download button for markdown
-            st.download_button(
-                label="Descargar Markdown",
-                data=st.session_state.markdown_content,
-                file_name="converted_markdown.md",
-                mime="text/markdown"
-            )
-        else:
-            st.info("Sube un PDF y haz clic en 'Convertir a Markdown' para ver el resultado.")
-    
-    with tab2:
-        if 'markdown_content' in st.session_state:
-            # Direct rendering of markdown with HTML support
-            st.markdown(st.session_state.markdown_content, unsafe_allow_html=True)
-        else:
-            st.info("Sube un PDF y haz clic en 'Convertir a Markdown' para ver la vista previa.")
+            if audio_path:
+                # Audio player section with aesthetic title
+                st.markdown('<h2 class="sub-header" style="text-align: center; margin-top: 2rem;">🎧 Reproduce para escuchar el Paper</h2>', unsafe_allow_html=True)
+                
+                # Display audio player
+                audio_file = open(audio_path, 'rb')
+                audio_bytes = audio_file.read()
+                st.audio(audio_bytes, format='audio/mp3')
+                audio_file.close()
+
+        # Display markdown content
+        if markdown_content:
+            st.markdown('<h2 class="sub-header">Resultado Markdown</h2>', unsafe_allow_html=True)
+            
+            # Create tabs for code and preview
+            code_tab, preview_tab = st.tabs(["Código", "Vista Previa"])
+            
+            with code_tab:
+                st.markdown('<div class="markdown-container">', unsafe_allow_html=True)
+                st.code(markdown_content, language='markdown')
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Add copy button
+                st.markdown(
+                    f'''
+                    <div class="button-container">
+                        <button class="copy-button" onclick="
+                            navigator.clipboard.writeText(`{markdown_content}`);
+                            this.textContent='¡Copiado!';
+                            setTimeout(() => this.textContent='Copiar al Portapapeles', 2000);
+                        ">Copiar al Portapapeles</button>
+                    </div>
+                    ''',
+                    unsafe_allow_html=True
+                )
+            
+            with preview_tab:
+                st.markdown('<div class="preview-container">', unsafe_allow_html=True)
+                st.markdown(markdown_content)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        # Clean up temporary files
+        os.unlink(tmp_file_path)
+        if 'audio_path' in locals() and os.path.exists(audio_path):
+            os.unlink(audio_path)
+
+    else:
+        st.error("Error processing the PDF file. Please try again.")
 
 # Footer
 st.markdown("---")
 st.markdown("Desarrollado con ❤️ usando Streamlit, Landing AI y Groq LLM")
+
+# Cleanup temporary directory when the app is closed
+# Note: This might not always execute in Streamlit's execution model
+def cleanup():
+    temp_dir.cleanup()
+
+# Register the cleanup function
+import atexit
+atexit.register(cleanup)
+
+# Initialize text generator
+text_generator = TextGenerator()
+
+# Process PDF and generate text/markdown
+if uploaded_file is not None:
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        tmp_file.write(uploaded_file.getvalue())
+        pdf_path = tmp_file.name
+
+    # Process PDF
+    processor = PDFProcessor()
+    json_response = processor.process_pdf(pdf_path)
+
+    if json_response:
+        # Generate text for speech
+        text_content = text_generator.generate_text(json_response)
+        
+        # Generate markdown
+        markdown_content = process_json_to_markdown(json_response)
+
+        if markdown_content:
+            st.markdown("### Generated Markdown")
+            st.text_area("Markdown Content", markdown_content, height=400)
+
+            # Text-to-Speech conversion
+            if text_content:
+                audio_file = text_to_speech(text_content)
+                if audio_file:
+                    st.audio(audio_file)
+
+            # Download buttons
+            st.download_button(
+                label="Download Markdown",
+                data=markdown_content,
+                file_name="converted.md",
+                mime="text/markdown"
+            )
+
+    # Clean up temporary file
+    os.unlink(pdf_path)
 
 # Cleanup temporary directory when the app is closed
 # Note: This might not always execute in Streamlit's execution model
