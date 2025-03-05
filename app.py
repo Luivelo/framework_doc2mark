@@ -188,6 +188,8 @@ with col1:
                             
                             if audio_result:
                                 audio_path = audio_result[0]
+                                # Add descriptive title for audio player
+                                st.markdown("### 🎧 Resumen de Audio - Haz clic para escuchar")
                                 # Add audio player to the interface
                                 st.audio(audio_path)
                             
@@ -229,7 +231,7 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.markdown("Desarrollado con ❤️ usando Streamlit, Landing AI y Groq LLM")
+st.markdown("Desarrollado con ❤️ usando Streamlit,Langchain, Landing AI y Groq LLM")
 
 # Cleanup temporary directory when the app is closed
 # Note: This might not always execute in Streamlit's execution model
