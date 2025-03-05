@@ -171,35 +171,49 @@ with col1:
                         markdown_content = process_json_to_markdown(result)
                         
                         if markdown_content and audio_text:
-                            # Store the markdown content in session state for display
+                            # Store the markdown content and audio text in session state
                             st.session_state.markdown_content = markdown_content
-                            
-                            # Save audio text to a temporary text file for TTS
-                            temp_text_path = os.path.join(temp_dir.name, "temp_markdown.txt")
-                            with open(temp_text_path, "w", encoding="utf-8") as f:
-                                f.write(audio_text)
-                            
-                            # Generate audio from the markdown content
-                            audio_result = text_to_speech(
-                                input_file_path=temp_text_path,
-                                output_file_path=os.path.join(temp_dir.name, "output_audio.wav"),
-                                voice_name="af_jessica"
-                            )
-                            
-                            if audio_result:
-                                audio_path = audio_result[0]
-                                # Add descriptive title for audio player
-                                st.markdown("### 🎧 Resumen de Audio - Haz clic para escuchar")
-                                # Add audio player to the interface
-                                st.audio(audio_path)
-                            
-                            st.success("¡Conversión completada!")
+                            st.session_state.audio_text = audio_text
+                            st.success("¡Conversión a Markdown completada!")
                         else:
                             st.error("Error al generar el markdown.")
                     except Exception as e:
                         st.error(f"Error durante la conversión: {str(e)}")
                 else:
                     st.error("Error al procesar el PDF.")
+
+    # Audio section - Moved outside the PDF processing block
+    st.markdown('---')
+    st.markdown('<h2 class="sub-header">Generación de Audio</h2>', unsafe_allow_html=True)
+    st.markdown("Convierte el contenido del documento en audio para una experiencia más accesible.")
+    
+    if 'audio_text' in st.session_state:
+        if st.button("Generar Audio", key="generate_audio"):
+            with st.spinner("Generando audio..."):
+                try:
+                    # Save audio text to a temporary text file for TTS
+                    temp_text_path = os.path.join(temp_dir.name, "temp_markdown.txt")
+                    with open(temp_text_path, "w", encoding="utf-8") as f:
+                        f.write(st.session_state.audio_text)
+                    
+                    # Generate audio from the markdown content
+                    audio_result = text_to_speech(
+                        input_file_path=temp_text_path,
+                        output_file_path=os.path.join(temp_dir.name, "output_audio.wav"),
+                        voice_name="af_jessica"
+                    )
+                    
+                    if audio_result:
+                        audio_path = audio_result[0]
+                        st.markdown("### 🎧 Resumen de Audio - Haz clic para escuchar")
+                        st.audio(audio_path)
+                        st.success("¡Audio generado exitosamente!")
+                    else:
+                        st.error("Error al generar el audio.")
+                except Exception as e:
+                    st.error(f"Error durante la generación de audio: {str(e)}")
+    else:
+        st.info("Primero sube y procesa un PDF para generar el audio.")
 
 with col2:
     st.markdown('<h2 class="sub-header">Resultado Markdown</h2>', unsafe_allow_html=True)
@@ -219,6 +233,7 @@ with col2:
                 file_name="converted_markdown.md",
                 mime="text/markdown"
             )
+            
         else:
             st.info("Sube un PDF y haz clic en 'Convertir a Markdown' para ver el resultado.")
     
@@ -231,58 +246,7 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.markdown("Desarrollado con ❤️ usando Streamlit,Langchain, Landing AI y Groq LLM")
-
-# Cleanup temporary directory when the app is closed
-# Note: This might not always execute in Streamlit's execution model
-def cleanup():
-    temp_dir.cleanup()
-
-# Register the cleanup function
-import atexit
-atexit.register(cleanup)
-
-# Initialize text generator
-text_generator = TextGenerator()
-
-# Process PDF and generate text/markdown
-if uploaded_file is not None:
-    # Save uploaded file temporarily
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        tmp_file.write(uploaded_file.getvalue())
-        pdf_path = tmp_file.name
-
-    # Process PDF
-    processor = PDFProcessor()
-    json_response = processor.process_pdf(pdf_path)
-
-    if json_response:
-        # Generate text for speech
-        text_content = text_generator.generate_text(json_response)
-        
-        # Generate markdown
-        markdown_content = process_json_to_markdown(json_response)
-
-        if markdown_content:
-            st.markdown("### Generated Markdown")
-            st.text_area("Markdown Content", markdown_content, height=400)
-
-            # Text-to-Speech conversion
-            if text_content:
-                audio_file = text_to_speech(text_content)
-                if audio_file:
-                    st.audio(audio_file)
-
-            # Download buttons
-            st.download_button(
-                label="Download Markdown",
-                data=markdown_content,
-                file_name="converted.md",
-                mime="text/markdown"
-            )
-
-    # Clean up temporary file
-    os.unlink(pdf_path)
+st.markdown("Desarrollado con ❤️ usando Streamlit, Langchain, Landing AI y Groq LLM")
 
 # Cleanup temporary directory when the app is closed
 # Note: This might not always execute in Streamlit's execution model
